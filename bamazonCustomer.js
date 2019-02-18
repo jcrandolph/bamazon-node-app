@@ -37,6 +37,7 @@ function listItems() {
     });
 }
 function purchase() {
+    //prompts user to make a selection and quantity to purchase
     inquirer
         .prompt([
             {
@@ -57,39 +58,38 @@ function purchase() {
             },
         ]).then(function (answer) {
             connection.query("SELECT stock_quantity FROM products WHERE item_id= ?", [answer.userSelection], function (err, res) {
+                //checks database if there is enough of the product to fill order
                 if (answer.userQuantity > res[0].stock_quantity) {
                     console.log("I'm sorry, we dont have enough in stock to fill that order!");
                     console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
                     closeOut();
                 }
-
+                //if stock is sufficient, continue with purchase
                 else {
                     var updatedQuantity = res[0].stock_quantity - answer.userQuantity;
                     connection.query("SELECT * FROM products WHERE item_id = ?", [answer.userSelection], function (err, res) {
                         var itemSelected = res[0].product_name;
                         var price = res[0].price;
                         var totalPrice = parseFloat(price * answers.userQuantity);
-                    
-                    connection.query("UPDATE products SET ? WHERE ?", [
-                        { stock_quantity: updatedQuantity },
-                        { item_id: answer.userSelection }],
-                        function (err, res) {
-                            if (err) throw err;
-                        })
-                    console.log("A wise and thoughtful purchase!");
-                    console.log("Let's review your order!");
-                    console.log("You've selected " + answer.userQuantity + " of  " + itemSelected);
-                    console.log("You're total purchase comes to $" + totalPrice);
-                    console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-                    closeOut();
-                });
+                        //update stock in database
+                        connection.query("UPDATE products SET ? WHERE ?", [
+                            { stock_quantity: updatedQuantity },
+                            { item_id: answer.userSelection }],
+                            function (err, res) {
+                                if (err) throw err;
+                            })
+                            //complete order
+                        console.log("A wise and thoughtful purchase!");
+                        console.log("Let's review your order!");
+                        console.log("You've selected " + answer.userQuantity + " of " + itemSelected);
+                        console.log("You're total purchase comes to $" + totalPrice);
+                        console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+                        closeOut();
+                    });
                 };
-                
             });
         });
-        
 }
-
 
 function closeOut() {
     inquirer
